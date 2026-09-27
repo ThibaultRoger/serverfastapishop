@@ -1,0 +1,24 @@
+{
+  "forge_version": "0.1.0",
+  "synced_at": "2026-09-27T12:31:33+00:00",
+  "schema": {
+    "name": "public",
+    "fingerprint": "6562d594d86bd81c",
+    "source": {
+      "mode": "file",
+      "origin": "/app/demo/shop-schema.sql",
+      "sha256": "594d41feba2d4fcecd52aa9acf7bdf3cf860eaedafdf51f5674d466b7ae4f369"
+    },
+    "tables": [
+      "categories",
+      "customers",
+      "orders",
+      "products"
+    ],
+    "skipped": {
+      "audit_log": "pas de clé primaire (non mappable par l'ORM)",
+      "order_items": "exclue par configuration"
+    }
+  },
+  "endpoints": {}
+}

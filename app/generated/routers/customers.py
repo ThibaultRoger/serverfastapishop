@@ -1,0 +1,74 @@
+# Généré par fastapi-forge — NE PAS MODIFIER : régénéré par `forge sync`.
+# Pour du comportement spécifique, créer un router dans app/custom/routers/.
+from __future__ import annotations
+
+import datetime  # noqa: F401
+import decimal  # noqa: F401
+import uuid  # noqa: F401
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, Response, status
+from sqlalchemy import func, select
+
+from app.core.db import SessionDep, commit_or_rollback
+from app.core.pagination import Page
+from app.generated.models import Customer
+from app.generated.schemas import CustomerCreate, CustomerRead, CustomerUpdate
+
+router = APIRouter(prefix="/customers", tags=["customers"])
+
+
+def _get_or_404(session: SessionDep, id: int) -> Customer:
+    obj = session.get(Customer, {"id": id})
+    if obj is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer introuvable")
+    return obj
+
+
+@router.get("", response_model=Page[CustomerRead], summary="Lister customers")
+def list_customers(
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[CustomerRead]:
+    total = session.scalar(select(func.count()).select_from(Customer)) or 0
+    rows = session.scalars(
+        select(Customer)
+        .order_by(Customer.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    items = [CustomerRead.model_validate(row) for row in rows]
+    return Page[CustomerRead](items=items, total=total, limit=limit, offset=offset)
+
+
+@router.get("/{id}", response_model=CustomerRead, summary="Lire un élément de customers")
+def get_customers(id: int, session: SessionDep) -> Customer:
+    return _get_or_404(session, id)
+
+
+@router.post("", response_model=CustomerRead, status_code=status.HTTP_201_CREATED, summary="Créer dans customers")
+def create_customers(payload: CustomerCreate, session: SessionDep) -> Customer:
+    obj = Customer(**payload.model_dump(exclude_unset=True))
+    session.add(obj)
+    commit_or_rollback(session)
+    session.refresh(obj)
+    return obj
+
+
+@router.patch("/{id}", response_model=CustomerRead, summary="Modifier un élément de customers")
+def update_customers(id: int, payload: CustomerUpdate, session: SessionDep) -> Customer:
+    obj = _get_or_404(session, id)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(obj, field, value)
+    commit_or_rollback(session)
+    session.refresh(obj)
+    return obj
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, summary="Supprimer un élément de customers")
+def delete_customers(id: int, session: SessionDep) -> Response:
+    obj = _get_or_404(session, id)
+    session.delete(obj)
+    commit_or_rollback(session)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

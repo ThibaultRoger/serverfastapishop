@@ -1,0 +1,39 @@
+# apiservershoptest2 : API FastAPI construite et lancée sur place, branchée sur une base existante.
+# Ce Compose ne crée aucune base : il faut renseigner DATABASE_URL dans .env.
+#
+#   git clone <ce dépôt> && cd apiservershoptest2
+#   cp .env.example .env          # puis renseigner DATABASE_URL
+#   docker compose up -d --build
+#   curl localhost:8000/ready     # « ready » = la base répond ; http://localhost:8000/docs
+#
+# Mise à jour : git pull && docker compose up -d --build
+name: apiservershoptest2
+
+services:
+  api:
+    build:
+      context: .
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-python:3.12-slim}
+        APP_VERSION: ${APP_VERSION:-local}
+        GIT_SHA: ${GIT_SHA:-unknown}      # GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build
+    image: apiservershoptest2:local
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?à renseigner dans .env (voir .env.example)}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
+    extra_hosts:
+      # Permet d'écrire host.docker.internal dans DATABASE_URL pour une base installée sur la machine.
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${API_BIND:-127.0.0.1}:${API_PORT:-8000}:8000"
+    healthcheck:
+      # /ready interroge la base : le conteneur n'est « healthy » que si la connexion fonctionne.
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]

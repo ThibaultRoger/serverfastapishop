@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: apiservershoptest2
+  description: "API Server shop."
+  tags: [python, fastapi, postgresql, forge]
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/guests
+  system: system:default/shop
+  providesApis:
+    - apiservershoptest2-api
+  dependsOn:
+    - resource:default/shop-db
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: apiservershoptest2-api
+  description: API REST de apiservershoptest2 (générée par la forge)
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: group:default/guests
+  system: system:default/shop
+  definition:
+    $text: ./openapi.json

@@ -1,0 +1,29 @@
+# Configuration fastapi-forge. Modifier puis lancer `forge sync`.
+service:
+  name: apiservershoptest2
+  description: API Server shop.
+  owner: group:default/guests
+  system: system:default/shop
+  namespace: default
+  image: ghcr.io/thibaultroger/apiservershoptest2
+  depends_on:
+  - resource:default/shop-db
+database:
+  schema: public
+  source: file
+  schema_origin: /app/demo/shop-schema.sql
+  include: []
+  exclude:
+  - order_items
+ai:
+  provider: ollama
+  model: qwen2.5-coder:7b
+  max_attempts: 3
+  temperature: 0.1
+delivery:
+  target: compose
+  github_owner: ThibaultRoger
+  factory_repo: usine-logicielle
+  factory_ref: v1
+  track_tag: main
+endpoints: []
